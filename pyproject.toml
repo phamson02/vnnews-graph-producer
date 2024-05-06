@@ -1,0 +1,38 @@
+[project]
+name = "vnnews-graph-producer"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "phamson02", email = "phamtienson02@gmail.com" }
+]
+dependencies = [
+    "pandas>=2.2.2",
+    "newspaper3k>=0.2.8",
+    "feedparser>=6.0.11",
+    "pytz>=2024.1",
+    "tenacity>=8.2.3",
+    "aiohttp>=3.9.5",
+    "lxml-html-clean>=0.1.1",
+    "transformers==4.29",
+    "torch>=2.3.0",
+]
+readme = "README.md"
+requires-python = ">= 3.8"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.rye]
+managed = true
+dev-dependencies = [
+    "pytest>=8.2.0",
+    "mypy>=1.10.0",
+    "pytest-asyncio>=0.23.6",
+]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vnnews_graph_producer"]
