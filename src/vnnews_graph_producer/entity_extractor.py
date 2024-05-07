@@ -1,28 +1,27 @@
 from typing import Any
 
+import transformers
 from transformers import AutoModelForTokenClassification, AutoTokenizer, pipeline
 from transformers.models.electra.configuration_electra import ElectraConfig
 
 from vnnews_graph_producer.data_models.entity import Entity, EntityType
 
-import transformers
-
 transformers.logging.set_verbosity(transformers.logging.CRITICAL)
+
+config = ElectraConfig.from_pretrained(
+    "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024"
+)
+model = AutoModelForTokenClassification.from_pretrained(
+    "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024",
+    trust_remote_code=True,
+    config=config,
+)
+tokenizer = AutoTokenizer.from_pretrained(
+    "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024"
+)
 
 
 def ner(text: str) -> list[dict[str, Any]]:
-    config = ElectraConfig.from_pretrained(
-        "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024"
-    )
-    model = AutoModelForTokenClassification.from_pretrained(
-        "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024",
-        trust_remote_code=True,
-        config=config,
-    )
-    tokenizer = AutoTokenizer.from_pretrained(
-        "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024"
-    )
-
     nlp = pipeline("ner", model=model, tokenizer=tokenizer, config=config)
     ner_results = nlp(text)
 

@@ -10,6 +10,7 @@ from dateutil.parser import parse
 from newspaper import Article as RawArticle
 from newspaper import Config
 from tenacity import retry, stop_after_attempt, wait_fixed
+from tqdm.asyncio import tqdm
 
 from vnnews_graph_producer.data_models.article import (
     Article,
@@ -81,7 +82,7 @@ async def fetch_article_contents(
         for article in articles
         if article.url
     ]
-    contents = await asyncio.gather(*tasks)
+    contents = await tqdm.gather(*tasks, desc="Fetching article contents")
 
     articles_with_content: list[Article] = []
     for article, content in zip(articles, contents):
@@ -164,7 +165,7 @@ async def get_articles_from_sources(
     for category, sources in category_to_sources.items():
         for rss_link in sources:
             tasks.append(fetch_rss_feed(session, rss_link))
-    items_lists = await asyncio.gather(*tasks)
+    items_lists = await tqdm.gather(*tasks, desc="Fetching RSS feeds")
 
     for items, (category, sources) in zip(items_lists, category_to_sources.items()):
         for rss_link, items in zip(sources, items_lists):

@@ -25,3 +25,16 @@ class Entity:
             remove_accents(self.name.lower()) == remove_accents(other.name.lower())
             and self.type == other.type
         )
+
+    @classmethod
+    def from_dict(cls, data: dict[str, str]) -> "Entity":
+        return cls(
+            name=data["name"],
+            type=EntityType(data["type"]),
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "name": self.name,
+            "type": self.type.value,
+        }

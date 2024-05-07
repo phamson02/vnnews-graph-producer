@@ -9,6 +9,7 @@ from vnnews_graph_producer.sanitize_text import (
     clean_vtc_text,
     clean_vtv_text,
 )
+from vnnews_graph_producer.utils import date_from_str, date_to_str
 
 
 class ArticleCategory(Enum):
@@ -28,6 +29,25 @@ class Article:
 
     def __repr__(self) -> str:
         return f"Article(\n\ttitle={self.title},\n\turl={self.url},\n\tpublished_date={self.published_date},\n\tcategory={self.category},\n\tcontent={self.content[:50]}...\n)"
+
+    @classmethod
+    def from_dict(cls, data: dict[str, str]) -> "Article":
+        return cls(
+            title=data["title"],
+            url=data["url"],
+            published_date=date_from_str(data["published_date"]),
+            category=ArticleCategory(data["category"]),
+            content=data["content"],
+        )
+
+    def to_dict(self) -> dict[str, str]:
+        return {
+            "title": self.title,
+            "url": self.url,
+            "published_date": date_to_str(self.published_date),
+            "category": self.category.value,
+            "content": self.content,
+        }
 
 
 @dataclass(frozen=True)
