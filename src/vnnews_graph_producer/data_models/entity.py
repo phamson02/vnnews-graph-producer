@@ -26,6 +26,9 @@ class Entity:
             and self.type == other.type
         )
 
+    def __hash__(self) -> int:
+        return hash((remove_accents(self.name.lower()), self.type))
+
     @classmethod
     def from_dict(cls, data: dict[str, str]) -> "Entity":
         return cls(

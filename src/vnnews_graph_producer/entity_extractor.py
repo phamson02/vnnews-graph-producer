@@ -21,11 +21,17 @@ tokenizer = AutoTokenizer.from_pretrained(
 )
 
 
-def ner(text: str) -> list[dict[str, Any]]:
+def ner(text: str, lowercase: bool, threshold: float) -> list[dict[str, Any]]:
     nlp = pipeline("ner", model=model, tokenizer=tokenizer, config=config)
+
+    if lowercase:
+        text = text.lower()
     ner_results = nlp(text)
 
     assert isinstance(ner_results, list)
+
+    # Filter out entities with confidence below the threshold
+    ner_results = [e for e in ner_results if e["score"] >= threshold]
 
     for e in ner_results:
         e["word"] = text[e["start"] : e["end"]]
@@ -33,14 +39,18 @@ def ner(text: str) -> list[dict[str, Any]]:
     return ner_results
 
 
-def get_entities_from_text(text: str) -> list[Entity]:
+def get_entities_from_text(
+    text: str,
+    lowercase: bool = False,
+    threshold: float = 0.9,
+) -> list[Entity]:
     """
     Extract Named Entity Recognition (NER) data from the text.
     """
     entities: set[Entity] = set()  # Use set to ensure unique entities
 
     try:
-        ner_results = ner(text)
+        ner_results = ner(text, lowercase, threshold)
         new_entities = process_entities(ner_results, text)
         entities.update(new_entities)
     except Exception as e:
@@ -155,4 +165,7 @@ def is_valid_entity(entity: Entity) -> bool:
     """
     Check if an entity is valid based on certain criteria.
     """
+    if ", " in entity.name:
+        return False
+
     return (entity.name[0].isalnum()) and (len(entity.name) > 1)
