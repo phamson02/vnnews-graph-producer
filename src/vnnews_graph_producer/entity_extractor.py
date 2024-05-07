@@ -27,18 +27,21 @@ def ner(text: str) -> list[dict[str, Any]]:
 
     assert isinstance(ner_results, list)
 
+    for e in ner_results:
+        e["word"] = text[e["start"] : e["end"]]
+
     return ner_results
 
 
-def get_entities_from_text(content: str) -> list[Entity]:
+def get_entities_from_text(text: str) -> list[Entity]:
     """
-    Extract Named Entity Recognition (NER) data from the content.
+    Extract Named Entity Recognition (NER) data from the text.
     """
     entities: set[Entity] = set()  # Use set to ensure unique entities
 
     try:
-        ner_results = ner(content)
-        new_entities = process_entities(ner_results)
+        ner_results = ner(text)
+        new_entities = process_entities(ner_results, text)
         entities.update(new_entities)
     except Exception as e:
         print(f"Error in NER processing: {e}")
@@ -46,21 +49,22 @@ def get_entities_from_text(content: str) -> list[Entity]:
     return list(entities)
 
 
-def process_entities(ner_results: list[dict[str, Any]]) -> list[Entity]:
+def process_entities(ner_results: list[dict[str, Any]], text: str) -> list[Entity]:
     """
     Process NER results to filter, combine entities, and extract unique entities.
     """
     combined_entities: list[Entity] = []
-    current_entity: list[str] = []
+    current_entity_span: tuple[int, int] = (0, 0)
     current_type = None
 
     excluded_words: set[str] = set()
 
     extracted_types = [e.value for e in EntityType]
 
-    for token in ner_results:
-        word: str = token["word"]
-        entity_type: str = token["entity"]
+    for res_token in ner_results:
+        start_idx = res_token["start"]
+        end_idx = res_token["end"]
+        entity_type: str = res_token["entity"]
 
         if entity_type.split("-")[1] in extracted_types:
             if (
@@ -68,24 +72,32 @@ def process_entities(ner_results: list[dict[str, Any]]) -> list[Entity]:
                 or current_type != entity_type.split("-")[1]
             ):
                 finalize_current_entity(
-                    combined_entities, current_entity, current_type, excluded_words
+                    combined_entities,
+                    current_entity_span,
+                    current_type,
+                    excluded_words,
+                    text,
                 )
-                current_entity = [word]
+                current_entity_span = (start_idx, end_idx)
                 current_type = entity_type.split("-")[1]
             elif (
                 entity_type.startswith("I-")
                 and current_type == entity_type.split("-")[1]
             ):
-                current_entity.append(word)
+                current_entity_span = (current_entity_span[0], end_idx)
         else:
             # Finalize the current entity if the current token is not part of an entity
             finalize_current_entity(
-                combined_entities, current_entity, current_type, excluded_words
+                combined_entities,
+                current_entity_span,
+                current_type,
+                excluded_words,
+                text,
             )
 
     # Finalize the last entity if present
     finalize_current_entity(
-        combined_entities, current_entity, current_type, excluded_words
+        combined_entities, current_entity_span, current_type, excluded_words, text
     )
 
     return [
@@ -97,15 +109,17 @@ def process_entities(ner_results: list[dict[str, Any]]) -> list[Entity]:
 
 def finalize_current_entity(
     combined_entities: list[Entity],
-    current_entity: list[str],
+    current_entity_span: tuple[int, int],
     current_type: str | None,
     excluded_words: set[str],
+    text: str,
 ):
     """
     Finalize the current entity and add it to the list of combined entities.
     """
-    if current_entity and current_type:
-        entity = " ".join(current_entity)
+    if ((current_entity_span[1] - current_entity_span[0]) > 0) and current_type:
+        entity = text[current_entity_span[0] : current_entity_span[1]]
+        entity = " ".join(entity.split())  # Remove extra spaces
         entity_type = current_type
         combined_entities.append(Entity(name=entity, type=EntityType(entity_type)))
 
@@ -114,7 +128,7 @@ def finalize_current_entity(
         excluded_words.update(subwords)
 
         # Clear current entity and type for the next one
-        current_entity = []
+        current_entity_span = (0, 0)
         current_type = None
 
 

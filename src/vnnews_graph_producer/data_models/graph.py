@@ -48,27 +48,38 @@ class NewsGraph:
     links: list[EdgeData]
 
     @classmethod
-    def from_sub_graph(cls, sub_graph: SubNewsGraph) -> "NewsGraph":
-        nodes = sub_graph.nodes
+    def from_subgraph(
+        cls,
+        sub_graph: SubNewsGraph,
+        edge_size_threshold: int = 3,
+    ) -> "NewsGraph":
+        # Filter out edges with less than edge_size_threshold articles
         links = []
+        node_set: set[Entity] = set()
         for link, articles in sub_graph.links.items():
-            key = (link.source.name + link.target.name).replace(" ", "-").lower()
-            articles = [
-                ArticleData(
-                    key=article.url,
-                    title=article.title,
-                    url=article.url,
-                    date=article.published_date.strftime("%Y-%m-%d-%H-%M"),
+            if len(articles) >= edge_size_threshold:
+                key = (link.source.name + link.target.name).replace(" ", "-").lower()
+                articles = [
+                    ArticleData(
+                        key=article.url,
+                        title=article.title,
+                        url=article.url,
+                        date=article.published_date.strftime("%Y-%m-%d-%H-%M"),
+                    )
+                    for article in articles
+                ]
+                links.append(
+                    EdgeData(
+                        key=key,
+                        source=link.source.name,
+                        target=link.target.name,
+                        size=len(articles),
+                        articles=articles,
+                    )
                 )
-                for article in articles
-            ]
-            links.append(
-                EdgeData(
-                    key=key,
-                    source=link.source.name,
-                    target=link.target.name,
-                    size=len(articles),
-                    articles=articles,
-                )
-            )
+                node_set.add(link.source)
+                node_set.add(link.target)
+
+        nodes = list(node_set)
+
         return cls(nodes=nodes, links=links)

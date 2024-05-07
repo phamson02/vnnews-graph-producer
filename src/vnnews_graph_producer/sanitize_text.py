@@ -130,13 +130,13 @@ def clean_text(text: str) -> str:
         lines[i] = line
     text = " ".join(lines)
 
+    # Clean image source
+    text = clean_unnecessary_text(text)
+
     # Remove any words that contains "/TTXVN"
     words = text.split(" ")
     words = [word for word in words if "/TTXVN" not in word]
     text = " ".join(words)
-
-    # Clean image source
-    text = clean_unnecessary_text(text)
 
     # Strip leading and trailing spaces
     text = text.strip()
