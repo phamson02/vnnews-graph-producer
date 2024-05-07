@@ -15,6 +15,8 @@ dependencies = [
     "lxml-html-clean>=0.1.1",
     "transformers==4.29",
     "torch>=2.3.0",
+    "fa2-modified>=0.3.9",
+    "python-louvain>=0.16",
 ]
 readme = "README.md"
 requires-python = ">= 3.8"

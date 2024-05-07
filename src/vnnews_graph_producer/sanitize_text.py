@@ -1,6 +1,19 @@
 import re
 
 
+def remove_accents(input_str: str) -> str:
+    s1 = "ÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚÝàáâãèéêìíòóôõùúýĂăĐđĨĩŨũƠơƯưẠạẢảẤấẦầẨẩẪẫẬậẮắẰằẲẳẴẵẶặẸẹẺẻẼẽẾếỀềỂểỄễỆệỈỉỊịỌọỎỏỐốỒồỔổỖỗỘộỚớỜờỞởỠỡỢợỤụỦủỨứỪừỬửỮữỰựỲỳỴỵỶỷỸỹ"
+    s0 = "AAAAEEEIIOOOOUUYaaaaeeeiioooouuyAaDdIiUuOoUuAaAaAaAaAaAaAaAaAaAaAaAaEeEeEeEeEeEeEeEeIiIiOoOoOoOoOoOoOoOoOoOoOoOoUuUuUuUuUuUuUuYyYyYyYy"
+
+    s = ""
+    for c in input_str:
+        if c in s1:
+            s += s0[s1.index(c)]
+        else:
+            s += c
+    return s
+
+
 def clean_plo_text(text: str) -> str:
     # Remove the last line
     text = text.rsplit("\n", 1)[0]
@@ -129,35 +142,3 @@ def clean_text(text: str) -> str:
     text = text.strip()
 
     return text
-
-
-# def main(args):
-#     df = pd.read_csv(args.input)
-
-#     # Clean VTV.vn text
-#     df.loc[df["url"].str.contains("vtv.vn"), "content"] = df.loc[
-#         df["url"].str.contains("vtv.vn"), "content"
-#     ].apply(clean_vtv_text)
-
-#     # Clean PLO text
-#     df.loc[df["url"].str.contains("plo.vn"), "content"] = df.loc[
-#         df["url"].str.contains("plo.vn"), "content"
-#     ].apply(clean_plo_text)
-
-#     # Clean VTC text
-#     df.loc[df["url"].str.contains("vtc.vn"), "content"] = df.loc[
-#         df["url"].str.contains("vtc.vn"), "content"
-#     ].apply(clean_vtc_text)
-
-#     # Clean laodong text
-#     df.loc[df["url"].str.contains("laodong.vn"), "content"] = df.loc[
-#         df["url"].str.contains("laodong.vn"), "content"
-#     ].apply(clean_laodong_text)
-
-#     # Clean all text
-#     df["content"] = df["content"].apply(clean_text)
-
-#     # Fill NaN values with title
-#     df["content"] = df["content"].fillna(df["title"])
-
-#     df.to_csv(args.output, index=False)

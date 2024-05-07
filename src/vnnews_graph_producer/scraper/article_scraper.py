@@ -127,7 +127,7 @@ def process_rss_items(items, category: ArticleCategory) -> list[ArticleWithNoCon
         article = ArticleWithNoContent(
             title=article_title,
             url=article_url,
-            publish_date=parse(item["published"]),
+            published_date=parse(item["published"]),
             category=category,
         )
 

@@ -1,27 +1,74 @@
+from dataclasses import dataclass
 from typing import Optional
+
+from vnnews_graph_producer.data_models.article import Article
+from vnnews_graph_producer.data_models.data_dicts import ArticleData, EdgeData
+from vnnews_graph_producer.data_models.link import Link
 from .entity import Entity
 
 
-class Graph:
+class SubNewsGraph:
     def __init__(
-        self, nodes: list[Entity], graph: Optional[dict[Entity, list[Entity]]] = None
+        self, nodes: list[Entity], links: Optional[dict[Link, set[Article]]] = None
     ):
         self.nodes = nodes
-        self.graph = graph or {node: [] for node in nodes}
+        self.links = links or {}
 
-    @staticmethod
-    def full_graph(nodes: list[Entity]) -> "Graph":
-        graph = {node: nodes.copy() for node in nodes}
-        return Graph(nodes=nodes, graph=graph)
+    @classmethod
+    def full_graph_from_article(
+        cls, nodes: list[Entity], article: Article
+    ) -> "SubNewsGraph":
+        assert len(nodes) == len(set(nodes)), "Nodes must be unique"
+        links = {}
+        for i, source in enumerate(nodes):
+            for target in nodes[i + 1 :]:
+                link = Link(source=source, target=target)
+                links[link] = {article}
+        return cls(nodes=nodes, links=links)
 
-    def __add__(self, other: "Graph") -> "Graph":
+    def __add__(self, other: "SubNewsGraph") -> "SubNewsGraph":
         new_nodes = list(set(self.nodes + other.nodes))
-        new_graph = self.graph.copy()
+        new_links = self.links.copy()
 
-        for node, neighbors in other.graph.items():
-            if node in new_graph:
-                new_graph[node].extend(neighbors)
+        for link, articles in other.links.items():
+            if link in new_links:
+                new_links[link] |= articles
             else:
-                new_graph[node] = neighbors
+                new_links[link] = articles
 
-        return Graph(nodes=new_nodes, graph=new_graph)
+        return SubNewsGraph(nodes=new_nodes, links=new_links)
+
+    def __repr__(self) -> str:
+        return f"SubNewsGraph(\n\tnodes={self.nodes},\n\tlinks={self.links}\n)"
+
+
+@dataclass(frozen=True)
+class NewsGraph:
+    nodes: list[Entity]
+    links: list[EdgeData]
+
+    @classmethod
+    def from_sub_graph(cls, sub_graph: SubNewsGraph) -> "NewsGraph":
+        nodes = sub_graph.nodes
+        links = []
+        for link, articles in sub_graph.links.items():
+            key = (link.source.name + link.target.name).replace(" ", "-").lower()
+            articles = [
+                ArticleData(
+                    key=article.url,
+                    title=article.title,
+                    url=article.url,
+                    date=article.published_date.strftime("%Y-%m-%d-%H-%M"),
+                )
+                for article in articles
+            ]
+            links.append(
+                EdgeData(
+                    key=key,
+                    source=link.source.name,
+                    target=link.target.name,
+                    size=len(articles),
+                    articles=articles,
+                )
+            )
+        return cls(nodes=nodes, links=links)
