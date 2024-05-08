@@ -11,6 +11,7 @@ from newspaper import Article as RawArticle
 from newspaper import Config
 from tenacity import retry, stop_after_attempt, wait_fixed
 from tqdm.asyncio import tqdm
+from aiolimiter import AsyncLimiter
 
 from vnnews_graph_producer.data_models.article import (
     Article,
@@ -41,7 +42,15 @@ ssl_context.options |= 0x4
 
 
 async def fetch(session: aiohttp.ClientSession, url: str) -> str:
-    async with session.get(url, ssl=ssl_context) as response:
+    limiter = AsyncLimiter(10, 1)
+    async with limiter:
+        response = await session.get(url, ssl=ssl_context)
+
+        if response.status != 200:
+            raise aiohttp.ClientResponseError(
+                response.request_info, response.history, code=response.status
+            )
+
         return await response.text()
 
 
@@ -92,6 +101,17 @@ async def fetch_article_contents(
     return articles_with_content
 
 
+def fetch_rss_feed_error_callback(retry_state) -> list[dict]:
+    print(f"Failed to fetch RSS feed: {retry_state.outcome.exception()}")
+    return []
+
+
+@retry(
+    wait=wait_fixed(10),
+    stop=stop_after_attempt(3),
+    reraise=False,
+    retry_error_callback=fetch_rss_feed_error_callback,
+)
 async def fetch_rss_feed(session: aiohttp.ClientSession, rss_link: str) -> list[dict]:
     html_text = await fetch(session, rss_link)
     rss = feedparser.parse(html_text)
