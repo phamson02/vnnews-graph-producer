@@ -20,6 +20,12 @@ class ArticleCategory(Enum):
 
 
 @dataclass(frozen=True)
+class Source:
+    rss_link: str
+    category: ArticleCategory
+
+
+@dataclass(frozen=True)
 class Article:
     title: str
     url: str

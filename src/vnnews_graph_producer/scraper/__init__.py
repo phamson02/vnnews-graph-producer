@@ -1,3 +1,3 @@
-from .article_scraper import get_today_articles
+from .article_scraper import get_last_24h_articles, async_get_last_24h_articles
 
-__all__ = ["get_today_articles"]
+__all__ = ["get_last_24h_articles", "async_get_last_24h_articles"]

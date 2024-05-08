@@ -26,6 +26,19 @@ class EdgeData(TypedDict):
     articles: list[ArticleData]
 
 
+class Cluster(TypedDict):
+    key: str
+    color: str
+    clusterLabel: str
+
+
+class Tag(TypedDict):
+    key: str
+    image: str
+
+
 class GraphData(TypedDict):
     nodes: list[NodeData]
     edges: list[EdgeData]
+    clusters: list[Cluster]
+    tags: list[Tag]

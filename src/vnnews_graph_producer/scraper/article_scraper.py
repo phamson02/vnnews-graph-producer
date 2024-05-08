@@ -16,13 +16,14 @@ from vnnews_graph_producer.data_models.article import (
     Article,
     ArticleCategory,
     ArticleWithNoContent,
+    Source,
 )
 
 from .sources import (
     EXCLUDED_SOURCES,
 )
 from .sources import (
-    category_to_sources as default_category_to_sources,
+    SOURCES as default_sources,
 )
 from .special_handlers import fix_thanhnien_title, open_vnanet_article
 
@@ -51,7 +52,7 @@ def fetch_content_error_callback(retry_state) -> Literal[""]:
 
 @retry(
     wait=wait_fixed(10),
-    stop=stop_after_attempt(5),
+    stop=stop_after_attempt(3),
     reraise=False,
     retry_error_callback=fetch_content_error_callback,
 )
@@ -139,61 +140,58 @@ def process_rss_items(items, category: ArticleCategory) -> list[ArticleWithNoCon
 
 async def get_articles_from_sources(
     session: aiohttp.ClientSession,
-    category_to_sources: dict[ArticleCategory, list[str]],
-    start_date: datetime.datetime,
-    end_date: datetime.datetime,
+    rss_sources: list[Source],
+    start_time: datetime.datetime,
+    end_time: datetime.datetime,
 ) -> list[ArticleWithNoContent]:
-    """Scrape articles from RSS links in category_to_sources
+    """Scrape articles from RSS sources published whithin a time range
 
     :param session: aiohttp ClientSession object
     :type session: :class:`aiohttp.ClientSession`
 
-    :param category_to_sources: Dictionary mapping ArticleCategory to list of RSS links
-    :type category_to_sources: :class:`dict[ArticleCategory, list[str]]`
+    :param rss_sources: List of Source objects
+    :type rss_sources: :class:`list[Source]`
 
-    :param start_date: Start date of the date range
-    :type start_date: :class:`datetime.datetime`
+    :param start_time: Start time of the time range
+    :type start_time: :class:`datetime.datetime`
 
-    :param end_date: End date of the date range
-    :type end_date: :class:`datetime.datetime`
+    :param end_time: End time of the time range
+    :type end_time: :class:`datetime.datetime`
 
     :return: List of ArticleWithNoContent objects
     :rtype: :class:`list[ArticleWithNoContent]`
     """
     all_articles: list[ArticleWithNoContent] = []
     tasks = []
-    for category, sources in category_to_sources.items():
-        for rss_link in sources:
-            tasks.append(fetch_rss_feed(session, rss_link))
+    for source in rss_sources:
+        tasks.append(fetch_rss_feed(session, source.rss_link))
     items_lists = await tqdm.gather(*tasks, desc="Fetching RSS feeds")
 
-    for items, (category, sources) in zip(items_lists, category_to_sources.items()):
-        for rss_link, items in zip(sources, items_lists):
-            # Filter rss items by date
-            filtered_items = [
-                item
-                for item in items
-                if start_date.strftime("%Y-%m-%d")
-                <= parse(item["published"]).strftime("%Y-%m-%d")
-                <= end_date.strftime("%Y-%m-%d")
-            ]
+    for items, source in zip(items_lists, rss_sources):
+        filtered_items = [
+            item
+            for item in items
+            if start_time.strftime("%Y-%m-%d %H:%M:%S")
+            <= parse(item["published"]).strftime("%Y-%m-%d %H:%M:%S")
+            <= end_time.strftime("%Y-%m-%d %H:%M:%S")
+        ]
 
-            print(f"Found {len(filtered_items)} articles from {rss_link}")
+        print(f"Found {len(filtered_items)} articles from {source.rss_link}")
 
-            articles = process_rss_items(filtered_items, category)
-            all_articles.extend(articles)
+        articles = process_rss_items(filtered_items, source.category)
+        all_articles.extend(articles)
 
     return all_articles
 
 
-async def async_get_today_articles(
-    category_to_sources: dict[ArticleCategory, list[str]] = default_category_to_sources,
+async def async_get_last_24h_articles(
+    rss_sources: list[Source] = default_sources,
     timezone: str = "Asia/Ho_Chi_Minh",
 ) -> list[Article]:
-    """Scrape articles from RSS links for today
+    """Scrape articles from RSS sources in the last 24 hours
 
-    :param category_to_sources: Dictionary mapping ArticleCategory to list of RSS links
-    :type category_to_sources: :class:`dict[ArticleCategory, list[str]]`
+    :param rss_sources: List of Source objects
+    :type rss_sources: :class:`list[Source]`
 
     :param timezone: Timezone to filter articles by date, defaults to "Asia/Ho_Chi_Minh"
     :type timezone: :class:`str`
@@ -201,16 +199,14 @@ async def async_get_today_articles(
     :return: List of Article objects
     :rtype: :class:`list[Article]`
     """
-    today = datetime.datetime.now(pytz.timezone(timezone))
-    next_day = datetime.datetime.now(pytz.timezone(timezone)) + datetime.timedelta(
-        days=1
-    )
+    end_time = datetime.datetime.now(pytz.timezone(timezone))
+    start_time = end_time - datetime.timedelta(days=1)
 
-    print(f"Today: {today}")
+    print(f"Fetching articles from {start_time} to {end_time}")
 
     async with aiohttp.ClientSession() as session:
         articles_with_no_content = await get_articles_from_sources(
-            session, category_to_sources, today, next_day
+            session, rss_sources, start_time, end_time
         )
         print(f"Found {len(articles_with_no_content)} articles from RSS feeds.")
         articles = await fetch_article_contents(session, articles_with_no_content)
@@ -219,8 +215,8 @@ async def async_get_today_articles(
     return articles
 
 
-def get_today_articles(
-    category_to_sources: dict[ArticleCategory, list[str]] = default_category_to_sources,
+def get_last_24h_articles(
+    rss_sources: list[Source] = default_sources,
     timezone: str = "Asia/Ho_Chi_Minh",
 ) -> list[Article]:
-    return asyncio.run(async_get_today_articles(category_to_sources, timezone))
+    return asyncio.run(async_get_last_24h_articles(rss_sources, timezone))
