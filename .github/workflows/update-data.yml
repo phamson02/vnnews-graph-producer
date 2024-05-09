@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Add github token to code file
-        run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" run.ipynb
+        run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" kaggle/run.ipynb
 
       - name: Push kernel to kaggle
         uses: Joel-hanson/kaggle-kernel-actions@V1
@@ -26,9 +26,4 @@ jobs:
           kaggle_key: ${{ secrets.kaggle_key }}
           kaggle_make_new_kernel: true
           kernel_id: phamson02/vnnews-script
-          code_file_path: run.ipynb
-          language: python
-          kernel_type: notebook
-          is_private: true
-          enable_gpu: true
-          enable_internet: true
+          kaggle_metadata_path: kaggle/kernel-metadata.json
