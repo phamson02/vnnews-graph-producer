@@ -17,7 +17,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Add github token to code file
-        run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" kaggle/run.ipynb
+        run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" kaggle/run.ipynb && pwd
 
       - name: Push kernel to kaggle
         uses: Joel-hanson/kaggle-kernel-actions@V1
