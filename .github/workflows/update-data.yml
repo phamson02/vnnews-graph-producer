@@ -20,7 +20,7 @@ jobs:
         run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" run.ipynb
 
       - name: Push kernel to kaggle
-        uses: Joel-hanson/kaggle-kernel-actions
+        uses: Joel-hanson/kaggle-kernel-actions@V1
         with:
           kaggle_username: ${{ secrets.kaggle_username }}
           kaggle_key: ${{ secrets.kaggle_key }}
