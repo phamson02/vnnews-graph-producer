@@ -1,6 +1,7 @@
 {
     "id": "phamson02/vnnews-script",
     "title": "vnnews-script",
+    "code_file": "run.ipynb",
     "language": "python",
     "kernel_type": "notebook",
     "is_private": "true",
