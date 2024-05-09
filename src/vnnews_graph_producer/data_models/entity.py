@@ -9,7 +9,7 @@ class EntityType(Enum):
     Organization = "ORGANIZATION"
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, order=True)
 class Entity:
     name: str
     type: EntityType
@@ -41,3 +41,14 @@ class Entity:
             "name": self.name,
             "type": self.type.value,
         }
+
+
+@dataclass(frozen=True)
+class EntityNode(Entity):
+    name: str
+    type: EntityType
+    tag: str
+    x: float
+    y: float
+    cluster: str
+    score: float

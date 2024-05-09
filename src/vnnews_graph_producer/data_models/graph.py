@@ -1,9 +1,18 @@
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Optional
 
+from vnnews_graph_producer.analytics import AnalyticsGraph
 from vnnews_graph_producer.data_models.article import Article
-from vnnews_graph_producer.data_models.data_dicts import ArticleData, EdgeData
-from vnnews_graph_producer.data_models.link import Link
+from vnnews_graph_producer.data_models.data_dicts import (
+    ArticleData,
+    EdgeData,
+    GraphData,
+    NodeData,
+    Tag,
+)
+from vnnews_graph_producer.data_models.link import Link, WeightedLink
+from vnnews_graph_producer.utils import date_to_str, hash_entity
 from .entity import Entity
 
 
@@ -45,7 +54,8 @@ class SubNewsGraph:
 @dataclass(frozen=True)
 class NewsGraph:
     nodes: list[Entity]
-    links: list[EdgeData]
+    links: list[WeightedLink]
+    date: datetime
 
     @classmethod
     def from_subgraph(
@@ -58,23 +68,12 @@ class NewsGraph:
         node_set: set[Entity] = set()
         for link, articles in sub_graph.links.items():
             if len(articles) >= edge_size_threshold:
-                key = (link.source.name + link.target.name).replace(" ", "-").lower()
-                articles = [
-                    ArticleData(
-                        key=article.url,
-                        title=article.title,
-                        url=article.url,
-                        date=article.published_date.strftime("%Y-%m-%d-%H-%M"),
-                    )
-                    for article in articles
-                ]
                 links.append(
-                    EdgeData(
-                        key=key,
-                        source=link.source.name,
-                        target=link.target.name,
+                    WeightedLink(
+                        source=link.source,
+                        target=link.target,
                         size=len(articles),
-                        articles=articles,
+                        articles=list(articles),
                     )
                 )
                 node_set.add(link.source)
@@ -82,4 +81,56 @@ class NewsGraph:
 
         nodes = list(node_set)
 
-        return cls(nodes=nodes, links=links)
+        date = datetime.now()
+
+        return cls(nodes=nodes, links=links, date=date)
+
+    def to_graph_data(self) -> GraphData:
+        analytics_graph = AnalyticsGraph(graph_links=self.links)
+
+        nodes = [
+            NodeData(
+                key=str(hash_entity(node)),
+                label=node.name,
+                tag=node.type.value,
+                x=node.x,
+                y=node.y,
+                cluster=node.cluster,
+                score=node.score,
+            )
+            for node in analytics_graph.entity_nodes
+        ]
+
+        edges = [
+            EdgeData(
+                key=str(hash(link)),
+                source=str(hash_entity(link.source)),
+                target=str(hash_entity(link.target)),
+                size=link.size,
+                articles=[
+                    ArticleData(
+                        key=str(hash(article)),
+                        title=article.title,
+                        url=article.url,
+                        date=date_to_str(article.published_date),
+                    )
+                    for article in link.articles
+                ],
+            )
+            for link in self.links
+        ]
+
+        clusters = [cluster.to_dict() for cluster in analytics_graph.clusters]
+
+        tags = [
+            Tag(key="PERSON", image="person.svg"),
+            Tag(key="ORGANIZATION", image="organization.svg"),
+        ]
+
+        return GraphData(
+            date=date_to_str(self.date),
+            nodes=nodes,
+            edges=edges,
+            clusters=clusters,
+            tags=tags,
+        )

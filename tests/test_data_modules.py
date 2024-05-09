@@ -6,11 +6,26 @@ from vnnews_graph_producer.data_models.graph import SubNewsGraph
 
 
 def test_equal_entity():
-    entity_1 = Entity(name="Vương Đình Huệ", type=EntityType.Person)
-    entity_2 = Entity(name="Vuong Dinh Hue", type=EntityType.Person)
-    entity_3 = Entity(name="Vương Đình Hụê", type=EntityType.Person)
+    entity_1 = Entity(name="quân đội nhân dân Việt Nam", type=EntityType.Person)
+    entity_2 = Entity(name="Quân đội Nhân dân Việt Nam", type=EntityType.Person)
 
-    assert entity_1 == entity_2 == entity_3
+    assert entity_1 == entity_2
+
+    assert len({entity_1, entity_2}) == 1
+
+
+def test_link_with_same_entities():
+    entity = Entity(name="Vương Đình Huệ", type=EntityType.Person)
+
+    entity_1 = Entity(name="quân đội nhân dân Việt Nam", type=EntityType.Person)
+    entity_2 = Entity(name="Quân đội Nhân dân Việt Nam", type=EntityType.Person)
+
+    link_1 = Link(source=entity, target=entity_1)
+    link_2 = Link(source=entity, target=entity_2)
+
+    assert link_1 == link_2
+
+    assert len({link_1, link_2}) == 1
 
 
 def test_equal_link():

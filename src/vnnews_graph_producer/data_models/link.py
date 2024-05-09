@@ -1,4 +1,6 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+from vnnews_graph_producer.data_models.article import Article
 
 from .entity import Entity
 
@@ -22,8 +24,12 @@ class Link:
         )
 
     def __hash__(self) -> int:
-        # Sort the entities to ensure that the hash is the same for both directions
-        entities = [self.source, self.target]
-        entities.sort(key=lambda x: x.name)
+        return hash(hash(self.source) + hash(self.target))
 
-        return hash((entities[0], entities[1]))
+
+@dataclass(frozen=True)
+class WeightedLink(Link):
+    source: Entity
+    target: Entity
+    size: int
+    articles: list[Article] = field(hash=False)

@@ -1,12 +1,13 @@
 from typing import TypedDict
+from color_generator import generate
 
 
 class NodeData(TypedDict):
     key: str
     label: str
     tag: str
-    x: str
-    y: str
+    x: float
+    y: float
     cluster: str
     score: float
 
@@ -26,10 +27,24 @@ class EdgeData(TypedDict):
     articles: list[ArticleData]
 
 
-class Cluster(TypedDict):
+class ClusterData(TypedDict):
     key: str
     color: str
     clusterLabel: str
+
+
+class Cluster:
+    def __init__(self, label: str):
+        self.key: str = str(hash(label))
+        self.color: str = generate("no-mono").hex
+        self.clusterLabel: str = label
+
+    def to_dict(self) -> ClusterData:
+        return ClusterData(
+            key=self.key,
+            color=self.color,
+            clusterLabel=self.clusterLabel,
+        )
 
 
 class Tag(TypedDict):
@@ -38,7 +53,8 @@ class Tag(TypedDict):
 
 
 class GraphData(TypedDict):
+    date: str
     nodes: list[NodeData]
     edges: list[EdgeData]
-    clusters: list[Cluster]
+    clusters: list[ClusterData]
     tags: list[Tag]
