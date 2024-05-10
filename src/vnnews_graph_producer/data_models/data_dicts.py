@@ -37,6 +37,15 @@ class Cluster:
         self.color: str = generate("no-mono").hex
         self.clusterLabel: str = label
 
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, Cluster):
+            return False
+
+        return self.key == value.key
+
+    def __hash__(self) -> int:
+        return int(self.key)
+
     def to_dict(self) -> ClusterData:
         return ClusterData(
             key=self.key,

@@ -21,7 +21,7 @@ class AnalyticsGraph:
         eigenvector_centrality_map = self.get_eigenvector_centrality()
         cluster_map = self.get_community(eigenvector_centrality_map)
 
-        self.clusters = [e for e in cluster_map.values()]
+        self.clusters = list(set(e for e in cluster_map.values()))
 
         self.entity_nodes = [
             EntityNode(
@@ -49,36 +49,45 @@ class AnalyticsGraph:
                 self.graph
             )
 
-            cluster_labels: dict[int, Entity] = {}
+            cluster_to_largest_entity: dict[int, Entity] = {}
             for entity, score in score_map.items():
                 cluster_idx = cluster_idx_map[entity]
-                if cluster_idx not in cluster_labels:
-                    cluster_labels[cluster_idx] = entity
-                elif score > score_map[cluster_labels[cluster_idx]]:
-                    cluster_labels[cluster_idx] = entity
+                if cluster_idx not in cluster_to_largest_entity:
+                    cluster_to_largest_entity[cluster_idx] = entity
+                elif score > score_map[cluster_to_largest_entity[cluster_idx]]:
+                    cluster_to_largest_entity[cluster_idx] = entity
 
-            entity_cluster_map: dict[Entity, Cluster] = {}
-            for entity, cluster_idx in cluster_idx_map.items():
-                entity_cluster_map[entity] = Cluster(
-                    label=cluster_labels[cluster_idx].name
-                )
+            clusters = [
+                Cluster(label=entity.name)
+                for entity in cluster_to_largest_entity.values()
+            ]
+
+            entity_cluster_map: dict[Entity, Cluster] = {
+                entity: clusters[cluster_idx_map[entity]] for entity in self.graph.nodes
+            }
 
         elif method == "greedy_modularity":
-            clusters: list[set[Entity]] = (
+            clusters_of_entities: list[set[Entity]] = (
                 nx.algorithms.community.modularity_max.greedy_modularity_communities(
                     self.graph, weight="weight"
                 )
             )  # type: ignore
-            cluster_labels: dict[int, Entity] = {
-                i: max(cluster, key=lambda entity: score_map[entity])
-                for i, cluster in enumerate(clusters)
+            cluster_labels: dict[int, str] = {
+                i: max(cluster, key=lambda entity: score_map[entity]).name
+                for i, cluster in enumerate(clusters_of_entities)
             }
 
+            clusters = [
+                Cluster(label=cluster_labels[i])
+                for i, cluster in enumerate(clusters_of_entities)
+            ]
+
             entity_cluster_map: dict[Entity, Cluster] = {
-                entity: Cluster(label=cluster_labels[i].name)
-                for i, cluster in enumerate(clusters)
+                entity: clusters[i]
+                for i, cluster in enumerate(clusters_of_entities)
                 for entity in cluster
             }
+
         else:
             raise ValueError(f"Invalid community detection method: {method}")
 
