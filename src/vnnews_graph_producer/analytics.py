@@ -1,6 +1,5 @@
 import networkx as nx
 from community import community_louvain
-from fa2_modified import ForceAtlas2
 from networkx import Graph
 
 from vnnews_graph_producer.data_models.data_dicts import Cluster
@@ -19,7 +18,6 @@ class AnalyticsGraph:
             )
         self.graph: Graph = G
 
-        position_map = self.get_positions()
         eigenvector_centrality_map = self.get_eigenvector_centrality()
         cluster_map = self.get_community(eigenvector_centrality_map)
 
@@ -30,40 +28,11 @@ class AnalyticsGraph:
                 name=entity.name,
                 type=entity.type,
                 tag=entity.type.value,
-                x=position_map[entity][0],
-                y=position_map[entity][1],
                 cluster=cluster_map[entity].key,
                 score=eigenvector_centrality_map[entity],
             )
             for entity in self.graph.nodes
         ]
-
-    def get_positions(self) -> dict[Entity, tuple[float, float]]:
-        forceatlas2 = ForceAtlas2(
-            # Behavior alternatives
-            outboundAttractionDistribution=True,  # Dissuade hubs
-            linLogMode=False,  # NOT IMPLEMENTED
-            adjustSizes=False,  # Prevent overlap (NOT IMPLEMENTED)
-            edgeWeightInfluence=1.0,
-            # Performance
-            jitterTolerance=1.0,  # Tolerance
-            barnesHutOptimize=True,
-            barnesHutTheta=1,
-            multiThreaded=False,  # NOT IMPLEMENTED
-            # Tuning
-            scalingRatio=10.0,
-            strongGravityMode=False,
-            gravity=1.0,
-            # Log
-            verbose=True,
-        )
-        positions: dict[Entity, tuple[float, float]] = (
-            forceatlas2.forceatlas2_networkx_layout(
-                self.graph, pos=None, iterations=1000, weight_attr="weight"
-            )
-        )
-
-        return positions
 
     def get_eigenvector_centrality(self) -> dict[Entity, float]:
         scores: dict[Entity, float] = nx.eigenvector_centrality(

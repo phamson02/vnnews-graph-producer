@@ -93,8 +93,6 @@ class NewsGraph:
                 key=str(hash_entity(node)),
                 label=node.name,
                 tag=node.type.value,
-                x=node.x,
-                y=node.y,
                 cluster=node.cluster,
                 score=node.score,
             )
