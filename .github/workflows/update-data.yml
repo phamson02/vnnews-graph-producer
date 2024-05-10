@@ -20,13 +20,13 @@ jobs:
         run: sed -i "s/GITHUB_TOKEN/${{ secrets.gh_token }}/g" kaggle/run.ipynb
 
       - name: Push kernel to kaggle
-        uses: Joel-hanson/kaggle-kernel-actions@V1
+        uses: Joel-hanson/kaggle-kernel-actions@aa64fccf493910121d0e90c002dc7581f3688cd7
         with:
           kaggle_username: ${{ secrets.kaggle_username }}
           kaggle_key: ${{ secrets.kaggle_key }}
           kaggle_make_new_kernel: true
           kernel_id: phamson/vnnews-daily-update
-          code_file_path: kaggle/run.ipynb
+          code_file_path: run.ipynb
           language: python
           kernel_type: notebook
           is_private: true
