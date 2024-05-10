@@ -1,4 +1,4 @@
-name: Update Data
+name: Trigger Kaggle Kernel to collect & process new data
 
 on:
   schedule:
