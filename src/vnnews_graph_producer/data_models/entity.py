@@ -48,7 +48,5 @@ class EntityNode(Entity):
     name: str
     type: EntityType
     tag: str
-    x: float
-    y: float
     cluster: str
     score: float

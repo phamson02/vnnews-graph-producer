@@ -6,8 +6,6 @@ class NodeData(TypedDict):
     key: str
     label: str
     tag: str
-    x: float
-    y: float
     cluster: str
     score: float
 
