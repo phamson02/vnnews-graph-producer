@@ -25,6 +25,8 @@ charset-normalizer==3.3.2
     # via requests
 click==8.1.7
     # via nltk
+color-generation==0.3.0
+    # via vnnews-graph-producer
 cssselect==1.2.0
     # via newspaper3k
 fa2-modified==0.3.9
