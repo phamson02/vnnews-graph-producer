@@ -28,6 +28,7 @@ jobs:
           kernel_id: phamson/vnnews-daily-update
           code_file_path: run.ipynb
           language: python
+          kernel_title: VNNews Daily Update
           kernel_type: notebook
           is_private: true
           enable_gpu: true
