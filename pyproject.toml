@@ -1,9 +1,9 @@
 [project]
 name = "vnnews-graph-producer"
 version = "0.1.0"
-description = "Add your description here"
+description = "Scraper and entity extractor for Vietnamese news"
 authors = [
-    { name = "phamson02", email = "phamtienson02@gmail.com" }
+    { name = "Pham Tien Son", email = "phamtienson02@gmail.com" }
 ]
 dependencies = [
     "pandas>=2.2.2",
@@ -15,7 +15,6 @@ dependencies = [
     "lxml-html-clean>=0.1.1",
     "transformers==4.29",
     "torch>=2.3.0",
-    "fa2-modified>=0.3.9",
     "python-louvain>=0.16",
     "aiolimiter>=1.1.0",
     "color-generation>=0.3.0",
