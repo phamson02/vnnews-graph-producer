@@ -20,10 +20,11 @@ tokenizer = AutoTokenizer.from_pretrained(
     "nguyendangsonlam/lsg-ner-vietnamese-electra-base-1024"
 )
 
+# Initialize the pipeline once at module level to avoid overhead on every call
+nlp = pipeline("ner", model=model, tokenizer=tokenizer, config=config)
+
 
 def ner(text: str, lowercase: bool, threshold: float) -> list[dict[str, Any]]:
-    nlp = pipeline("ner", model=model, tokenizer=tokenizer, config=config)
-
     if lowercase:
         text = text.lower()
     ner_results = nlp(text)
